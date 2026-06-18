@@ -28,12 +28,16 @@ function renderRow(link: Link): string {
   const slug = escapeHtml(link.slug);
   const target = escapeHtml(link.redirect_url);
   const dataJson = escapeHtml(JSON.stringify(link));
+  const campaignCell = link.campaign_name
+    ? `<span class="block max-w-[180px] truncate" title="${escapeHtml(link.campaign_name)}">${escapeHtml(link.campaign_name)}</span>`
+    : `<span class="text-zinc-300">—</span>`;
   return `<tr data-slug="${slug}" data-link="${dataJson}" class="border-t border-zinc-100 hover:bg-zinc-50/60">
+  <td class="px-4 py-3 text-sm font-medium text-zinc-800">${campaignCell}</td>
   <td class="px-4 py-3">
     <a href="/g/${slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">${slug}</a>
   </td>
   <td class="px-4 py-3">
-    <span class="block max-w-[280px] truncate text-zinc-600" title="${target}">${target}</span>
+    <span class="block max-w-[240px] truncate text-zinc-600" title="${target}">${target}</span>
   </td>
   <td class="px-4 py-3 text-right font-mono text-sm tabular-nums text-zinc-700">${link.click_count}</td>
   <td class="px-4 py-3 text-xs text-zinc-500">${escapeHtml(relTime(link.created_at))}</td>
@@ -53,7 +57,7 @@ export function renderDashboard(
 ): string {
   const rows = links.length
     ? links.map(renderRow).join("\n")
-    : `<tr><td colspan="5" class="px-4 py-12 text-center text-sm text-zinc-400">No links yet. Paste a WhatsApp invite URL above and hit +.</td></tr>`;
+    : `<tr><td colspan="6" class="px-4 py-12 text-center text-sm text-zinc-400">No links yet. Paste a WhatsApp invite URL above and hit +.</td></tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -76,7 +80,15 @@ export function renderDashboard(
     <span id="count" class="text-xs text-zinc-500">${links.length} link${links.length === 1 ? "" : "s"}</span>
   </header>
 
-  <form id="quickAdd" class="mb-6 flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">
+  <form id="quickAdd" class="mb-6 flex items-center gap-1 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">
+    <input
+      type="text"
+      name="campaign_name"
+      placeholder="Campaign name"
+      autocomplete="off"
+      class="w-44 shrink-0 rounded-xl bg-transparent px-4 py-3 text-sm outline-none placeholder:text-zinc-400"
+    />
+    <span class="h-6 w-px shrink-0 bg-zinc-200"></span>
     <input
       type="url"
       name="redirect_url"
@@ -84,7 +96,7 @@ export function renderDashboard(
       required
       pattern="https?://.+"
       autocomplete="off"
-      class="flex-1 rounded-xl bg-transparent px-4 py-3 text-sm outline-none placeholder:text-zinc-400"
+      class="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-sm outline-none placeholder:text-zinc-400"
     />
     <button id="addBtn" type="submit" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black text-2xl leading-none text-white transition active:scale-95">+</button>
   </form>
@@ -93,6 +105,7 @@ export function renderDashboard(
     <table class="w-full text-sm">
       <thead class="bg-zinc-50/60 text-left text-[10px] uppercase tracking-wider text-zinc-500">
         <tr>
+          <th class="px-4 py-3 font-medium">Campaign</th>
           <th class="px-4 py-3 font-medium">Slug</th>
           <th class="px-4 py-3 font-medium">Target</th>
           <th class="px-4 py-3 text-right font-medium">Clicks</th>
@@ -126,6 +139,10 @@ ${rows}
         <label class="block">
           <span class="text-xs font-medium uppercase tracking-wider text-zinc-500">Short link</span>
           <div id="editShortLink" class="mt-1 font-mono text-sm text-zinc-700"></div>
+        </label>
+        <label class="block">
+          <span class="text-xs font-medium uppercase tracking-wider text-zinc-500">Campaign name</span>
+          <input name="campaign_name" type="text" placeholder="Internal label, not shown to visitors" class="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400" />
         </label>
         <label class="block">
           <span class="text-xs font-medium uppercase tracking-wider text-zinc-500">Target URL</span>
@@ -214,6 +231,7 @@ function openEdit(slug) {
   const link = JSON.parse(row.getAttribute('data-link'));
   const form = document.getElementById('editForm');
   form.slug.value = link.slug;
+  form.campaign_name.value = link.campaign_name || '';
   form.redirect_url.value = link.redirect_url;
   form.eyebrow.value = link.eyebrow;
   form.brand.value = link.brand;
@@ -233,6 +251,7 @@ async function saveEdit() {
   const slug = form.slug.value;
   const body = {
     redirect_url: form.redirect_url.value.trim(),
+    campaign_name: form.campaign_name.value.trim(),
     eyebrow: form.eyebrow.value.trim(),
     brand: form.brand.value.trim(),
     badge: form.badge.value.trim(),
@@ -250,7 +269,14 @@ async function saveEdit() {
   if (row) {
     row.setAttribute('data-link', JSON.stringify(updated));
     const tds = row.querySelectorAll('td');
-    const target = tds[1].querySelector('span');
+    // Campaign cell (index 0)
+    if (updated.campaign_name) {
+      tds[0].innerHTML = '<span class="block max-w-[180px] truncate" title="' + escapeAttr(updated.campaign_name) + '">' + escapeText(updated.campaign_name) + '</span>';
+    } else {
+      tds[0].innerHTML = '<span class="text-zinc-300">—</span>';
+    }
+    // Target cell (index 2)
+    const target = tds[2].querySelector('span');
     if (target) { target.textContent = updated.redirect_url; target.setAttribute('title', updated.redirect_url); }
   }
   closeEdit();
@@ -261,6 +287,7 @@ document.getElementById('quickAdd').onsubmit = async (e) => {
   e.preventDefault();
   const form = e.target;
   const url = form.redirect_url.value.trim();
+  const name = form.campaign_name.value.trim();
   if (!url) return;
   const btn = document.getElementById('addBtn');
   btn.disabled = true;
@@ -268,7 +295,7 @@ document.getElementById('quickAdd').onsubmit = async (e) => {
   const res = await fetch('/' + ADMIN_PATH + '/links', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ redirect_url: url }),
+    body: JSON.stringify({ redirect_url: url, campaign_name: name }),
   });
   btn.disabled = false;
   btn.textContent = '+';
@@ -287,19 +314,26 @@ document.getElementById('quickAdd').onsubmit = async (e) => {
   updateCount();
 };
 
+function escapeAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escapeText(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function buildRowHtml(link) {
-  const dataJson = JSON.stringify(link)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  const target = link.redirect_url
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const dataJson = escapeAttr(JSON.stringify(link));
+  const target = escapeAttr(link.redirect_url);
+  const campaignCell = link.campaign_name
+    ? '<span class="block max-w-[180px] truncate" title="' + escapeAttr(link.campaign_name) + '">' + escapeText(link.campaign_name) + '</span>'
+    : '<span class="text-zinc-300">—</span>';
   return \`<tr data-slug="\${link.slug}" data-link="\${dataJson}" class="border-t border-zinc-100 hover:bg-zinc-50/60">
+  <td class="px-4 py-3 text-sm font-medium text-zinc-800">\${campaignCell}</td>
   <td class="px-4 py-3">
     <a href="/g/\${link.slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">\${link.slug}</a>
   </td>
   <td class="px-4 py-3">
-    <span class="block max-w-[280px] truncate text-zinc-600" title="\${target}">\${target}</span>
+    <span class="block max-w-[240px] truncate text-zinc-600" title="\${target}">\${target}</span>
   </td>
   <td class="px-4 py-3 text-right font-mono text-sm tabular-nums text-zinc-700">\${link.click_count}</td>
   <td class="px-4 py-3 text-xs text-zinc-500">just now</td>

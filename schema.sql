@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS links (
   slug TEXT PRIMARY KEY,
   redirect_url TEXT NOT NULL,
+  campaign_name TEXT NOT NULL DEFAULT '',
   eyebrow TEXT NOT NULL DEFAULT 'You are about to join',
   brand TEXT NOT NULL DEFAULT 'bosses of bangalore',
   badge TEXT NOT NULL DEFAULT 'beta',

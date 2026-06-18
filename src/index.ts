@@ -67,7 +67,7 @@ app.get("/:adminPath", async (c) => {
 app.post("/:adminPath/links", async (c) => {
   if (!adminOk(c)) return c.notFound();
   const body = (await c.req.json().catch(() => null)) as
-    | { redirect_url?: string; eyebrow?: string; brand?: string; badge?: string; button_label?: string; slug?: string }
+    | { redirect_url?: string; campaign_name?: string; eyebrow?: string; brand?: string; badge?: string; button_label?: string; slug?: string }
     | null;
   if (!body || typeof body.redirect_url !== "string" || !isValidUrl(body.redirect_url)) {
     return c.json({ error: "redirect_url must be a valid http(s) URL" }, 400);
@@ -95,6 +95,7 @@ app.post("/:adminPath/links", async (c) => {
   await db.createLink(c.env.DB, {
     slug,
     redirect_url: body.redirect_url,
+    campaign_name: body.campaign_name,
     eyebrow: body.eyebrow,
     brand: body.brand,
     badge: body.badge,
@@ -111,7 +112,7 @@ app.patch("/:adminPath/links/:slug", async (c) => {
   if (!existing) return c.json({ error: "not found" }, 404);
 
   const body = (await c.req.json().catch(() => null)) as
-    | { redirect_url?: string; eyebrow?: string; brand?: string; badge?: string; button_label?: string }
+    | { redirect_url?: string; campaign_name?: string; eyebrow?: string; brand?: string; badge?: string; button_label?: string }
     | null;
   if (!body) return c.json({ error: "invalid body" }, 400);
   if (body.redirect_url !== undefined && !isValidUrl(body.redirect_url)) {

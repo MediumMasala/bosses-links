@@ -1,6 +1,7 @@
 export type Link = {
   slug: string;
   redirect_url: string;
+  campaign_name: string;
   eyebrow: string;
   brand: string;
   badge: string;
@@ -10,7 +11,7 @@ export type Link = {
 };
 
 export type LinkOverrides = Partial<
-  Pick<Link, "eyebrow" | "brand" | "badge" | "button_label">
+  Pick<Link, "campaign_name" | "eyebrow" | "brand" | "badge" | "button_label">
 >;
 
 export async function listLinks(db: D1Database): Promise<Link[]> {
@@ -37,7 +38,13 @@ export async function createLink(
 ): Promise<void> {
   const fields = ["slug", "redirect_url"];
   const values: (string | number)[] = [input.slug, input.redirect_url];
-  for (const key of ["eyebrow", "brand", "badge", "button_label"] as const) {
+  for (const key of [
+    "campaign_name",
+    "eyebrow",
+    "brand",
+    "badge",
+    "button_label",
+  ] as const) {
     if (input[key] !== undefined && input[key] !== null && input[key] !== "") {
       fields.push(key);
       values.push(input[key] as string);
@@ -61,6 +68,7 @@ export async function updateLink(
   const values: (string | number)[] = [];
   const allowed = [
     "redirect_url",
+    "campaign_name",
     "eyebrow",
     "brand",
     "badge",
@@ -68,7 +76,8 @@ export async function updateLink(
   ] as const;
   for (const key of allowed) {
     const v = (patch as Record<string, unknown>)[key];
-    if (typeof v === "string" && v.length > 0) {
+    // campaign_name allows clearing to empty string; others require non-empty
+    if (typeof v === "string" && (key === "campaign_name" || v.length > 0)) {
       sets.push(`${key} = ?`);
       values.push(v);
     }
