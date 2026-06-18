@@ -34,7 +34,7 @@ function renderRow(link: Link): string {
   return `<tr data-slug="${slug}" data-link="${dataJson}" class="border-t border-zinc-100 hover:bg-zinc-50/60">
   <td class="px-4 py-3 text-sm font-medium text-zinc-800">${campaignCell}</td>
   <td class="px-4 py-3">
-    <a href="/g/${slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">${slug}</a>
+    <a href="/${slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">${slug}</a>
   </td>
   <td class="px-4 py-3">
     <span class="block max-w-[240px] truncate text-zinc-600" title="${target}">${target}</span>
@@ -183,7 +183,7 @@ ${rows}
 <script>
 const ADMIN_PATH = ${JSON.stringify(env.ADMIN_PATH)};
 const ORIGIN = window.location.origin;
-const shortFor = (slug) => ORIGIN + "/g/" + slug;
+const shortFor = (slug) => ORIGIN + "/" + slug;
 
 let toastTimer;
 function toast(msg) {
@@ -330,7 +330,7 @@ function buildRowHtml(link) {
   return \`<tr data-slug="\${link.slug}" data-link="\${dataJson}" class="border-t border-zinc-100 hover:bg-zinc-50/60">
   <td class="px-4 py-3 text-sm font-medium text-zinc-800">\${campaignCell}</td>
   <td class="px-4 py-3">
-    <a href="/g/\${link.slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">\${link.slug}</a>
+    <a href="/\${link.slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">\${link.slug}</a>
   </td>
   <td class="px-4 py-3">
     <span class="block max-w-[240px] truncate text-zinc-600" title="\${target}">\${target}</span>

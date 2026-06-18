@@ -48,20 +48,26 @@ app.get("/", (c) =>
   ),
 );
 
-app.get("/g/:slug", async (c) => {
-  const slug = c.req.param("slug");
+async function serveSlug(c: Context<{ Bindings: Bindings }>, slug: string) {
   const link = await db.getLink(c.env.DB, slug);
   if (!link) return c.notFound();
   c.executionCtx.waitUntil(db.incrementClick(c.env.DB, slug));
   return c.html(renderInterstitial(link));
-});
+}
 
-// --- Admin (gated by ADMIN_PATH var) ---
+// Legacy /g/:slug — kept for any links already shared on workers.dev
+app.get("/g/:slug", async (c) => serveSlug(c, c.req.param("slug")));
 
-app.get("/:adminPath", async (c) => {
-  if (!adminOk(c)) return c.notFound();
-  const links = await db.listLinks(c.env.DB);
-  return c.html(renderDashboard(links, { ADMIN_PATH: c.env.ADMIN_PATH }));
+// --- Admin + slug dispatch (gated by ADMIN_PATH var) ---
+
+// Single-segment GET: dashboard if first segment matches ADMIN_PATH, else slug lookup
+app.get("/:first", async (c) => {
+  const first = c.req.param("first");
+  if (first === c.env.ADMIN_PATH) {
+    const links = await db.listLinks(c.env.DB);
+    return c.html(renderDashboard(links, { ADMIN_PATH: c.env.ADMIN_PATH }));
+  }
+  return serveSlug(c, first);
 });
 
 app.post("/:adminPath/links", async (c) => {
