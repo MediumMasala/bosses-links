@@ -59,3 +59,7 @@ All routes are gated by `/:adminPath` and 404 otherwise.
 | DELETE | `/:adminPath/links/:slug` | — | `{ ok: true }` |
 
 Slugs are auto-generated (7 chars, `a-z2-9`, no confusable 0/1/l/o/i) unless you pass one explicitly.
+
+## Why is X built this way?
+
+See [DECISIONS.md](DECISIONS.md) — the rationale behind each non-obvious choice (stack, auth model, custom-domain wiring, routing, click tracking).
