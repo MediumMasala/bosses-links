@@ -1,0 +1,21 @@
+{
+  "name": "bosses-links",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create bosses-links-db",
+    "db:apply:remote": "wrangler d1 execute bosses-links-db --remote --file=./schema.sql",
+    "db:apply:local": "wrangler d1 execute bosses-links-db --local --file=./schema.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.0.0"
+  }
+}

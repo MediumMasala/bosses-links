@@ -1,0 +1,19 @@
+name = "bosses-links"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+account_id = "a8e831b9fc9f3941e67b0bd1885e1c45"
+
+[vars]
+ADMIN_PATH = "manage-x7q9k2a"
+DEFAULT_EYEBROW = "You are about to join"
+DEFAULT_BRAND = "bosses of bangalore"
+DEFAULT_BADGE = "beta"
+DEFAULT_BUTTON_LABEL = "Join the group"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bosses-links-db"
+database_id = "2feb7d16-f0c3-4a76-bdcc-af9a2b21a757"
+
+[observability]
+enabled = true
