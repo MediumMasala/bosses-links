@@ -2,6 +2,7 @@ name = "bosses-links"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
 account_id = "a8e831b9fc9f3941e67b0bd1885e1c45"
+workers_dev = true
 
 [vars]
 ADMIN_PATH = "manage-x7q9k2a"
@@ -14,6 +15,14 @@ DEFAULT_BUTTON_LABEL = "Join the group"
 binding = "DB"
 database_name = "bosses-links-db"
 database_id = "2feb7d16-f0c3-4a76-bdcc-af9a2b21a757"
+
+[[routes]]
+pattern = "bossesofbangalore.com"
+custom_domain = true
+
+[[routes]]
+pattern = "www.bossesofbangalore.com"
+custom_domain = true
 
 [observability]
 enabled = true

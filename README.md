@@ -3,8 +3,9 @@
 Tiny link generator: paste a WhatsApp invite, get a short link. The short link shows the **same branded interstitial** as [slide-into-action](https://github.com/MediumMasala/slide-into-action) on desktop, and redirects straight to WhatsApp on mobile.
 
 **Live:**
-- Dashboard: `https://bosses-links.yash-a8e.workers.dev/manage-x7q9k2a`
-- Public link pattern: `https://bosses-links.yash-a8e.workers.dev/g/<slug>`
+- Dashboard: `https://bossesofbangalore.com/manage-x7q9k2a`
+- Public link pattern: `https://bossesofbangalore.com/<slug>`
+- Legacy fallback: `https://bosses-links.yash-a8e.workers.dev/<slug>` and `/g/<slug>` (kept working for any links shared before the custom domain went live)
 
 ## What it does
 
