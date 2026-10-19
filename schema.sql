@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS links (
   brand TEXT NOT NULL DEFAULT 'bosses of bangalore',
   badge TEXT NOT NULL DEFAULT 'beta',
   button_label TEXT NOT NULL DEFAULT 'Join the group',
+  template TEXT NOT NULL DEFAULT 'bob',
   click_count INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

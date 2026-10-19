@@ -1,4 +1,5 @@
 import type { Link } from "./db";
+import { DEFAULT_TEMPLATE, TEMPLATES } from "./templates";
 
 function escapeHtml(s: string): string {
   return s
@@ -24,6 +25,16 @@ function relTime(iso: string): string {
   return new Date(t).toISOString().slice(0, 10);
 }
 
+const SELECT_CLASS =
+  "rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 outline-none hover:border-zinc-300 focus:border-zinc-400";
+
+function templateOptions(current: string): string {
+  return TEMPLATES.map(
+    (t) =>
+      `<option value="${t.id}"${t.id === current ? " selected" : ""}>${escapeHtml(t.label)}</option>`,
+  ).join("");
+}
+
 function renderRow(link: Link): string {
   const slug = escapeHtml(link.slug);
   const target = escapeHtml(link.redirect_url);
@@ -37,7 +48,10 @@ function renderRow(link: Link): string {
     <a href="/${slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">${slug}</a>
   </td>
   <td class="px-4 py-3">
-    <span class="block max-w-[240px] truncate text-zinc-600" title="${target}">${target}</span>
+    <select onchange="setTemplate('${slug}', this)" class="${SELECT_CLASS}" aria-label="Page">${templateOptions(link.template ?? DEFAULT_TEMPLATE)}</select>
+  </td>
+  <td class="px-4 py-3">
+    <span class="block max-w-[200px] truncate text-zinc-600" title="${target}">${target}</span>
   </td>
   <td class="px-4 py-3 text-right font-mono text-sm tabular-nums text-zinc-700">${link.click_count}</td>
   <td class="px-4 py-3 text-xs text-zinc-500">${escapeHtml(relTime(link.created_at))}</td>
@@ -57,7 +71,7 @@ export function renderDashboard(
 ): string {
   const rows = links.length
     ? links.map(renderRow).join("\n")
-    : `<tr><td colspan="6" class="px-4 py-12 text-center text-sm text-zinc-400">No links yet. Paste a WhatsApp invite URL above and hit +.</td></tr>`;
+    : `<tr><td colspan="7" class="px-4 py-12 text-center text-sm text-zinc-400">No links yet. Paste a WhatsApp invite URL above and hit +.</td></tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -71,7 +85,7 @@ export function renderDashboard(
 </style>
 </head>
 <body class="bg-zinc-50 text-zinc-900 antialiased">
-<main class="mx-auto max-w-4xl px-4 py-10">
+<main class="mx-auto max-w-5xl px-4 py-10">
   <header class="mb-8 flex items-end justify-between">
     <div>
       <h1 class="text-2xl font-bold tracking-tight">bosses-links</h1>
@@ -98,6 +112,7 @@ export function renderDashboard(
       autocomplete="off"
       class="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-sm outline-none placeholder:text-zinc-400"
     />
+    <select name="template" class="mr-1 shrink-0 ${SELECT_CLASS}" aria-label="Page" title="Page visitors see before the redirect">${templateOptions(DEFAULT_TEMPLATE)}</select>
     <button id="addBtn" type="submit" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black text-2xl leading-none text-white transition active:scale-95">+</button>
   </form>
 
@@ -107,6 +122,7 @@ export function renderDashboard(
         <tr>
           <th class="px-4 py-3 font-medium">Campaign</th>
           <th class="px-4 py-3 font-medium">Slug</th>
+          <th class="px-4 py-3 font-medium">Page</th>
           <th class="px-4 py-3 font-medium">Target</th>
           <th class="px-4 py-3 text-right font-medium">Clicks</th>
           <th class="px-4 py-3 font-medium">Created</th>
@@ -119,7 +135,7 @@ ${rows}
     </table>
   </div>
 
-  <p class="mt-4 text-center text-xs text-zinc-400">Mobile visitors redirect straight to WhatsApp. Desktop sees the branded interstitial.</p>
+  <p class="mt-4 text-center text-xs text-zinc-400">Mobile visitors redirect straight to the target. Desktop sees the page picked in the Page column.</p>
 </main>
 
 <!-- Toast -->
@@ -150,7 +166,7 @@ ${rows}
         </label>
         <div class="pt-2">
           <h3 class="text-xs font-medium uppercase tracking-wider text-zinc-500">Branding</h3>
-          <p class="mt-1 text-xs text-zinc-400">Shown on the desktop interstitial.</p>
+          <p class="mt-1 text-xs text-zinc-400">Shown on the Bosses of Bangalore page. The TalBoss page uses fixed copy.</p>
         </div>
         <label class="block">
           <span class="text-xs font-medium text-zinc-600">Eyebrow</span>
@@ -182,6 +198,8 @@ ${rows}
 
 <script>
 const ADMIN_PATH = ${JSON.stringify(env.ADMIN_PATH)};
+const TEMPLATES = ${JSON.stringify(TEMPLATES)};
+const SELECT_CLASS = ${JSON.stringify(SELECT_CLASS)};
 const ORIGIN = window.location.origin;
 const shortFor = (slug) => ORIGIN + "/" + slug;
 
@@ -223,6 +241,27 @@ async function deleteLink(slug) {
   document.querySelector('tr[data-slug="' + slug + '"]')?.remove();
   toast('Deleted');
   updateCount();
+}
+
+async function setTemplate(slug, sel) {
+  const row = document.querySelector('tr[data-slug="' + slug + '"]');
+  const link = JSON.parse(row.getAttribute('data-link'));
+  const prev = link.template || 'bob';
+  sel.disabled = true;
+  const res = await fetch('/' + ADMIN_PATH + '/links/' + slug, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ template: sel.value }),
+  });
+  sel.disabled = false;
+  if (!res.ok) { sel.value = prev; toast('Failed: ' + await res.text()); return; }
+  const updated = await res.json();
+  row.setAttribute('data-link', JSON.stringify(updated));
+  toast(slug + ' now uses ' + sel.options[sel.selectedIndex].text);
+}
+
+function templateOptionsHtml(current) {
+  return TEMPLATES.map((t) => '<option value="' + t.id + '"' + (t.id === current ? ' selected' : '') + '>' + escapeText(t.label) + '</option>').join('');
 }
 
 function openEdit(slug) {
@@ -275,8 +314,8 @@ async function saveEdit() {
     } else {
       tds[0].innerHTML = '<span class="text-zinc-300">—</span>';
     }
-    // Target cell (index 2)
-    const target = tds[2].querySelector('span');
+    // Target cell (index 3)
+    const target = tds[3].querySelector('span');
     if (target) { target.textContent = updated.redirect_url; target.setAttribute('title', updated.redirect_url); }
   }
   closeEdit();
@@ -288,6 +327,7 @@ document.getElementById('quickAdd').onsubmit = async (e) => {
   const form = e.target;
   const url = form.redirect_url.value.trim();
   const name = form.campaign_name.value.trim();
+  const template = form.template.value;
   if (!url) return;
   const btn = document.getElementById('addBtn');
   btn.disabled = true;
@@ -295,7 +335,7 @@ document.getElementById('quickAdd').onsubmit = async (e) => {
   const res = await fetch('/' + ADMIN_PATH + '/links', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ redirect_url: url, campaign_name: name }),
+    body: JSON.stringify({ redirect_url: url, campaign_name: name, template }),
   });
   btn.disabled = false;
   btn.textContent = '+';
@@ -333,7 +373,10 @@ function buildRowHtml(link) {
     <a href="/\${link.slug}" target="_blank" class="font-mono text-sm font-medium text-zinc-900 hover:underline">\${link.slug}</a>
   </td>
   <td class="px-4 py-3">
-    <span class="block max-w-[240px] truncate text-zinc-600" title="\${target}">\${target}</span>
+    <select onchange="setTemplate('\${link.slug}', this)" class="\${SELECT_CLASS}" aria-label="Page">\${templateOptionsHtml(link.template)}</select>
+  </td>
+  <td class="px-4 py-3">
+    <span class="block max-w-[200px] truncate text-zinc-600" title="\${target}">\${target}</span>
   </td>
   <td class="px-4 py-3 text-right font-mono text-sm tabular-nums text-zinc-700">\${link.click_count}</td>
   <td class="px-4 py-3 text-xs text-zinc-500">just now</td>

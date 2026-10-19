@@ -1,4 +1,5 @@
 import type { Link } from "./db";
+import { TALBOSS_LOGO_SVG } from "./talboss-logo";
 
 function escapeHtml(s: string): string {
   return s
@@ -12,6 +13,13 @@ function escapeHtml(s: string): string {
 const AUTO_PRESS_MS = 2000;
 
 export function renderInterstitial(link: Link): string {
+  return link.template === "talboss"
+    ? renderTalBoss(link)
+    : renderBossesOfBangalore(link);
+}
+
+// Original orange page, unchanged
+function renderBossesOfBangalore(link: Link): string {
   const eyebrow = escapeHtml(link.eyebrow);
   const brand = escapeHtml(link.brand);
   const badge = escapeHtml(link.badge);
@@ -110,6 +118,113 @@ export function renderInterstitial(link: Link): string {
   // Kick off the 2s progress fill
   requestAnimationFrame(function(){ fill.style.width = '100%'; });
   setTimeout(go, ${AUTO_PRESS_MS});
+})();
+</script>
+</body>
+</html>`;
+}
+
+const TALBOSS_COUNTDOWN_S = 3;
+
+// Black-and-white TalBoss page: copy is fixed (the per-link branding fields
+// belong to the Bosses of Bangalore page), counts down 3-2-1 then auto-presses.
+function renderTalBoss(link: Link): string {
+  const redirectUrlJson = JSON.stringify(link.redirect_url).replace(/</g, "\\u003c");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#000000" />
+<title>TalBoss</title>
+<meta name="description" content="The fastest hiring app." />
+<meta property="og:title" content="TalBoss" />
+<meta property="og:description" content="The fastest hiring app." />
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:0 24px;background:linear-gradient(165deg,#1c1c1e 0%,#0b0b0d 52%,#000 100%)}
+  .glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(115% 75% at 50% 8%,rgba(255,255,255,0.12),rgba(255,255,255,0) 58%)}
+  .col{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:40px;width:100%;max-width:384px}
+  .head{display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center}
+  .logo{width:84px;height:84px;border-radius:18px;box-shadow:0 18px 40px -14px rgba(255,255,255,0.28),0 0 0 1px rgba(255,255,255,0.06)}
+  .logo svg{display:block;width:100%;height:100%}
+  .brand{color:#fff;font-weight:900;text-transform:lowercase;letter-spacing:-0.02em;line-height:0.92;font-size:2.85rem;margin:0}
+  @media (min-width:640px){.brand{font-size:3.75rem}}
+  .count{color:rgba(255,255,255,0.6);font-size:16px;font-weight:500;letter-spacing:0.01em;margin:0}
+  .count b{display:inline-block;min-width:0.7em;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
+  .count b.tick{animation:tick 420ms cubic-bezier(0.22,1,0.36,1)}
+  @keyframes tick{0%{transform:scale(1.5);opacity:0.2}100%{transform:scale(1);opacity:1}}
+  .cta-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%}
+  .cta{position:relative;width:100%;height:68px;overflow:hidden;border-radius:9999px;background:#fff;display:flex;align-items:center;justify-content:center;gap:10px;border:0;cursor:pointer;color:#000;font:inherit;user-select:none;box-shadow:0 10px 30px -10px rgba(255,255,255,0.25);transition:transform 180ms cubic-bezier(0.22,1,0.36,1)}
+  .cta.pressed{transform:scale(0.98)}
+  .cta .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(0,0,0,0.1);pointer-events:none;transition:width ${TALBOSS_COUNTDOWN_S * 1000}ms linear}
+  .cta .fill.fast{transition:width 180ms linear}
+  .cta .lbl{position:relative;z-index:1;color:#000;font-size:17px;font-weight:600;letter-spacing:0.01em}
+  .cta .icon{position:relative;z-index:1;width:20px;height:20px;color:#000}
+  .rise{opacity:0;transform:translateY(14px);transition:opacity 700ms ease,transform 700ms cubic-bezier(0.22,1,0.36,1)}
+  .rise.in{opacity:1;transform:translateY(0)}
+  .rise.d60{transition-delay:60ms}
+  .rise.d140{transition-delay:140ms}
+  .rise.d240{transition-delay:240ms}
+  .rise.d360{transition-delay:360ms}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="glow"></div>
+  <div class="col">
+    <div class="head">
+      <div class="logo rise d60" role="img" aria-label="TalBoss">${TALBOSS_LOGO_SVG}</div>
+      <h1 class="brand rise d140">the fastest<br />hiring app</h1>
+      <p id="count" class="count rise d240">Redirecting you in <b id="n">${TALBOSS_COUNTDOWN_S}</b></p>
+    </div>
+    <div class="cta-wrap rise d360">
+      <button id="cta" type="button" class="cta" aria-label="Continue">
+        <span id="fill" class="fill"></span>
+        <span class="lbl">Continue</span>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var REDIRECT = ${redirectUrlJson};
+  var ua = navigator.userAgent || "";
+  // Mobile skips the interstitial and goes straight to the link
+  if (/Android|iPhone|iPad|iPod/i.test(ua)) {
+    window.location.href = REDIRECT;
+    return;
+  }
+  // Desktop: 3-2-1 countdown, then the button presses itself
+  document.querySelectorAll('.rise').forEach(function(el){
+    requestAnimationFrame(function(){ el.classList.add('in'); });
+  });
+  var fired = false;
+  var cta = document.getElementById('cta');
+  var fill = document.getElementById('fill');
+  var n = document.getElementById('n');
+  var left = ${TALBOSS_COUNTDOWN_S};
+  var timer = setInterval(function(){
+    left -= 1;
+    if (left <= 0) { go(); return; }
+    n.textContent = left;
+    n.classList.remove('tick'); void n.offsetWidth; n.classList.add('tick');
+  }, 1000);
+  function go(){
+    if (fired) return;
+    fired = true;
+    clearInterval(timer);
+    document.getElementById('count').textContent = 'Redirecting…';
+    fill.classList.add('fast');
+    fill.style.width = '100%';
+    cta.classList.add('pressed');
+    setTimeout(function(){ window.location.href = REDIRECT; }, 200);
+  }
+  cta.addEventListener('click', go);
+  requestAnimationFrame(function(){ fill.style.width = '100%'; });
 })();
 </script>
 </body>

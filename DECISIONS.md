@@ -58,3 +58,11 @@ The `Android|iPhone|iPad|iPod` UA check runs in inline JS, after the HTML has be
 This is verbatim from [slide-into-action](https://github.com/MediumMasala/slide-into-action) — kept the same shape so the interstitial component could be ported byte-for-byte. The mobile redirect costs one extra round-trip vs server-side `302`, but in practice the network savings are imperceptible and the simpler code path is worth more.
 
 **Edge case to know about:** in-app browsers (Instagram, LinkedIn) with quirky UAs may match `iPhone` and get the mobile path even though they can't open WhatsApp natively from a redirect. If this becomes a real complaint, add UA-sniffing for the major in-app browsers and route them through the desktop interstitial (or a third "open in your default browser" state).
+
+## 9. Per-link page template, picked from a dropdown
+
+Each link has a `template` column (`bob` | `talboss`, list lives in `src/templates.ts`). The dashboard shows a Page dropdown on every row and in the quick-add bar; changing it PATCHes immediately. `bob` is the original orange Bosses of Bangalore page and the column default, so every link created before templates existed kept its page with no backfill (`migrations/0002_template.sql`).
+
+The TalBoss page (black and white, tal BOSS app icon, "the fastest hiring app", 3-2-1 countdown then auto-press) uses fixed copy. The eyebrow/brand/badge/button fields only drive the `bob` page, because the existing rows all carry "bosses of bangalore" copy that would be wrong on a TalBoss page. Mobile still skips straight to the target on both templates.
+
+**Adding a template:** add an entry to `TEMPLATES`, a `render…` function in `src/interstitial.ts`, and a branch in `renderInterstitial`. No migration needed.

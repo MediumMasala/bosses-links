@@ -1,3 +1,5 @@
+import type { TemplateId } from "./templates";
+
 export type Link = {
   slug: string;
   redirect_url: string;
@@ -6,12 +8,13 @@ export type Link = {
   brand: string;
   badge: string;
   button_label: string;
+  template: TemplateId;
   click_count: number;
   created_at: string;
 };
 
 export type LinkOverrides = Partial<
-  Pick<Link, "campaign_name" | "eyebrow" | "brand" | "badge" | "button_label">
+  Pick<Link, "campaign_name" | "eyebrow" | "brand" | "badge" | "button_label" | "template">
 >;
 
 export async function listLinks(db: D1Database): Promise<Link[]> {
@@ -44,6 +47,7 @@ export async function createLink(
     "brand",
     "badge",
     "button_label",
+    "template",
   ] as const) {
     if (input[key] !== undefined && input[key] !== null && input[key] !== "") {
       fields.push(key);
@@ -73,6 +77,7 @@ export async function updateLink(
     "brand",
     "badge",
     "button_label",
+    "template",
   ] as const;
   for (const key of allowed) {
     const v = (patch as Record<string, unknown>)[key];
